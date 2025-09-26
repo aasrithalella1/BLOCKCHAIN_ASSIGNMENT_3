@@ -1,34 +1,24 @@
-// hardhat.config.ts
+// hardhat.config.ts (v3)
 import "dotenv/config";
 import "@nomicfoundation/hardhat-toolbox-viem";
 
-const RPC_URL = process.env.RPC_URL!;
-const CHAIN_ID = Number(process.env.CHAIN_ID || "0");
+const RPC_URL = process.env.RPC_URL || "http://127.0.0.1:8545";
+const CHAIN_ID = Number(process.env.CHAIN_ID || "31337");
 
 export default {
   solidity: {
-    version: "0.8.28", // or your chosen version; make sure it compiles all files
+    version: "0.8.24", // or 0.8.28 if your contracts require it
     settings: { optimizer: { enabled: true, runs: 200 } },
   },
   networks: {
-    // remote DIDLab (leave as-is for later)
-    didlab: {
+    localhost: {
       url: RPC_URL,
       chainId: CHAIN_ID,
-      type: "http",
+      type: "http",              // v3 feature
     },
-
-    // local EDR sim (Hardhat's built-in)
     hardhat: {
-      type: "edr-simulated",
+      type: "edr-simulated",     // v3 feature
       initialBaseFeePerGas: 1_000_000_000,
-    },
-
-    // ✅ NEW: local HTTP endpoint (Hardhat node at 127.0.0.1:8545)
-    local: {
-      url: "http://127.0.0.1:8545",
-      chainId: 31337,
-      type: "http",
     },
   },
 };

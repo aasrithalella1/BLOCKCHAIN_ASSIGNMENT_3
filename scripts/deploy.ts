@@ -1,59 +1,49 @@
-// scripts/deploy.ts
+import "dotenv/config";
 import { artifacts } from "hardhat";
 import { createWalletClient, createPublicClient, http, parseUnits } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
-const RPC_URL = process.env.RPC_URL!;
-const CHAIN_ID = Number(process.env.CHAIN_ID!);
-const PRIVATE_KEY = (process.env.PRIVATE_KEY || "").replace(/^0x/, "");
+const {
+  RPC_URL, CHAIN_ID, PRIVATE_KEY,
+  TOKEN_NAME, TOKEN_SYMBOL, TOKEN_CAP, TOKEN_INITIAL
+} = process.env;
 
 async function main() {
-  if (!RPC_URL || !CHAIN_ID || !PRIVATE_KEY) {
-    throw new Error("Missing RPC_URL, CHAIN_ID, or PRIVATE_KEY in .env");
-  }
+  if (!RPC_URL || !CHAIN_ID || !PRIVATE_KEY) throw new Error("Missing RPC_URL/CHAIN_ID/PRIVATE_KEY");
+  if (!TOKEN_NAME || !TOKEN_SYMBOL || !TOKEN_CAP || !TOKEN_INITIAL) throw new Error("Missing TOKEN_* envs");
 
-  // Read compiled CampusCredit contract artifact
-  const { abi, bytecode } = await artifacts.readArtifact("CampusCredit");
+  const chainId = Number(CHAIN_ID);
+  const account = privateKeyToAccount(PRIVATE_KEY as `0x${string}`);
 
-  // Build chain object for Viem
   const chain = {
-    id: CHAIN_ID,
-    name: `didlab-${CHAIN_ID}`,
+    id: chainId,
+    name: `local-${chainId}`,
     nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
     rpcUrls: { default: { http: [RPC_URL] } },
-  };
+  } as const;
 
-  const account = privateKeyToAccount(`0x${PRIVATE_KEY}`);
   const wallet = createWalletClient({ account, chain, transport: http(RPC_URL) });
-  const publicClient = createPublicClient({ chain, transport: http(RPC_URL) });
+  const pub    = createPublicClient({ chain, transport: http(RPC_URL) });
 
-  // Determine initial supply — use .env TOKEN_INITIAL if present, else 1,000,000
-  const humanReadableSupply = process.env.TOKEN_INITIAL || "1000000";
-  const initialSupply = parseUnits(humanReadableSupply, 18); // ✅ number for decimals
+  const { abi, bytecode } = await artifacts.readArtifact("ProdToken");
 
-  console.log("Deploying CampusCredit...");
-  console.log("Deployer address:", account.address);
-  console.log("Initial supply:", humanReadableSupply, "CAMP");
+  const capWei     = parseUnits(String(TOKEN_CAP), 18);
+  const initialWei = parseUnits(String(TOKEN_INITIAL), 18);
 
-  // Send deployment transaction
-  const txHash = await wallet.deployContract({
-    abi,
-    bytecode,
-    args: [initialSupply],
+  const hash = await wallet.deployContract({
+    abi, bytecode,
+    args: [TOKEN_NAME, TOKEN_SYMBOL, capWei, account.address, initialWei],
+    maxPriorityFeePerGas: 2_000_000_000n,
+    maxFeePerGas:        20_000_000_000n,
   });
+  console.log("Deploy tx:", hash);
 
-  console.log("Deployment transaction hash:", txHash);
-
-  // Wait until mined
-  const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
-
-  console.log("✅ CampusCredit deployed successfully!");
-  console.log("Contract address:", receipt.contractAddress);
-  console.log("Block number:", receipt.blockNumber);
+  const rcpt = await pub.waitForTransactionReceipt({ hash });
+  if (rcpt.status !== "success") throw new Error("Deploy failed");
+  console.log("Deployed at:", rcpt.contractAddress);
+  console.log("Block:", rcpt.blockNumber);
+  console.log("Deployer:", account.address);
 }
 
-main().catch((err) => {
-  console.error("Deployment failed:", err);
-  process.exit(1);
-});
+main().catch((e) => { console.error(e); process.exit(1); });
 
