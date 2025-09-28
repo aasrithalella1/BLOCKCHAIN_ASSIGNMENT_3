@@ -1,61 +1,72 @@
-# Assignment 3 — Team 06  
-**CampusCredit (CAMP) ERC-20 Token**
+**Assignment 3 — Production-Style ERC-20 (Team 06)
+Objective
 
-## Network Details
-- **RPC URL**: https://hh-06.didlab.org  
-- **Chain ID**: 31342  
-- **Token Address**
+The goal of this assignment was to design, deploy, and test a production-ready ERC-20 token (CampusCredit – symbol: CAMP) on the DIDLab private blockchain using Hardhat v3 (ESM) and Viem scripts. The token needed to support:
 
----
+Cap enforcement (max supply limit)
 
-## Setup
-```bash
-# install dependencies
-npm install
+Burnable tokens
 
-# compile the contract
-npm run compile
+Pausable transfers
 
-# deploy contract (prints tx hash, address, block number)
-node scripts/deploy.js
+Role-based access (DEFAULT_ADMIN_ROLE, MINTER_ROLE, PAUSER_ROLE)
 
-# test transfer + approve (prints before/after balances & allowance)
-node scripts/transferApprove.js
+Batch airdrop with error check**
 
-# compare gas for batch airdrop vs N singles
-node scripts/batchVsSingles.js
 
-# fetch Transfer & Approval logs (last ~2000 blocks)
-node scripts/logsEvents.js
+What I Did
 
-Features
+Project Setup
 
-Cap enforced (ERC20Capped + airdrop precheck).
+Created project folder, installed Hardhat v3, Viem, OpenZeppelin v5, dotenv.
 
-Burnable and Pausable (OZ v5).
+Initialized Hardhat in ESM mode.
 
-Role-based control:
+Configured hardhat.config.js with Team 06 RPC (https://hh-06.didlab.org, Chain ID 31342).
 
-DEFAULT_ADMIN_ROLE
+Contract Development
 
-MINTER_ROLE
+Wrote CampusCredit.sol extending OpenZeppelin ERC-20 with cap, burn, pause, and roles.
 
-PAUSER_ROLE
+Added custom airdrop function with error handling.
 
-Custom errors for airdrop (AirdropLengthMismatch, AirdropCapExceeded).
+Compiled successfully (Screenshot S3).
 
-Evidence to Submit
+Deployment
 
-Console outputs:
+Wrote deploy.js with Viem.
 
-out-deploy.txt
+Deployed contract to DIDLab chain.
 
-out-transfer-approve.txt
+Captured tx hash, deployed address, and block number (S4).
 
-out-batch-vs-singles.txt
+Saved deployed address into .env (S5).
 
-out-logs.txt
+Interaction Scripts
 
-Screenshots 
+transferApprove.js → executed transfer and approve. Verified balances before/after and allowance. (S6)
 
-Node version, project tree, config, compile, deploy, balances, gas, logs, MetaMask network/token/tx.
+batchVsSingles.js → compared gas for batch airdrop vs N single transfers. Saw batch saved gas. (S7)
+
+logsEvents.js → pulled Transfer and Approval logs from last ~2000 blocks. (S8)
+
+MetaMask Proof
+
+Added DIDLab network (RPC + Chain ID 31342). (S9)
+
+Imported account with faucet key and token with deployed address. (S10)
+
+Sent one CAMP transfer and verified on MetaMask. (S11)
+
+Packaging
+
+Collected all console outputs into text files (out-deploy.txt, etc.).
+
+Added README and .env.example.
+
+Collected screenshots
+
+
+Conclusion
+
+I successfully completed Assignment 3 by creating and deploying the CampusCredit ERC-20 token with all required features. I verified its behavior through Hardhat + Viem scripts and MetaMask proof, documented outputs in text files + screenshots, and packaged everything into the final repo.
